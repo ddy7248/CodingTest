@@ -9,6 +9,7 @@ public class RecoNewID {
 		System.out.println("id: "+id);
 		
 		System.out.println("Commit test!!");
+		System.out.println("Commit test2!");
 	}
 
 	public String solution(String new_id) {
