@@ -7,6 +7,8 @@ public class RecoNewID {
 		String new_id = "...abc...";
 		String id = reco.solution(new_id);
 		System.out.println("id: "+id);
+		
+		System.out.println("Commit test!!");
 	}
 
 	public String solution(String new_id) {
