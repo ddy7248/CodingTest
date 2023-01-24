@@ -1,10 +1,16 @@
 package pro.kakao;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EmoticonDiscountEvent {
+	
+	static int[] bestResult = {0, 0};
+	static int[] discountPolicy = {10, 20, 30, 40};		// 이모티콘 할인율 선택 목록
+	static List<LinkedHashMap<Integer, Integer>> discountCaseList = new ArrayList<LinkedHashMap<Integer,Integer>>();
 
 	public static void main(String[] args) {
 		int[][] users = {{40, 10000}, {25, 10000}};		// (비율, 가격)
@@ -21,10 +27,13 @@ public class EmoticonDiscountEvent {
 	 * 2.이모티콘 판매액을 최대한 늘리는 것. 
 	 */
 	public static int[] getBestDiscountPolicy(int[][] users, int[] emoticons) {
-		int[] bestResult = {};
-		int[] discountPolicy = {10, 20, 30, 40};	// 이모티콘 할인율 선택 목록
-		LinkedHashMap<Integer, Integer[]> salesResultMap = new LinkedHashMap<Integer, Integer[]>();	// 이모티콘 판매결과 Map
-		int resultIdx = 0;
+		int emoLen = 0;
+		int discountPolicyLen = 0;
+		
+		
+		emoLen = emoticons.length;
+		discountPolicyLen = discountPolicy.length;
+		
 		
 		// TODO 이모티콘 할인율 배정 LOOP 필요
 		LinkedHashMap<Integer, Integer> emoticonDiscountMap = new LinkedHashMap<Integer, Integer>();
@@ -35,10 +44,9 @@ public class EmoticonDiscountEvent {
 			idx++;
 		}
 
-
 		// 이모티콘 판매결과
 		int svcJoinUserCount 		= 0;	// 이모티콘 플러스 서비스 가입자 수
-		int emoticonPurchaseTotCost = 0;	// 이모티콘 판매액
+		int emoticonPurchaseTotCost = 0;	// 이모티콘 총 판매액
 
 		// 이모티콘 구매 비용 계산
 		for(int[] user: users) {
@@ -52,10 +60,10 @@ public class EmoticonDiscountEvent {
 			
 			for (Map.Entry<Integer, Integer> entry : emoticonDiscountMap.entrySet()) {
 				Integer no = entry.getKey();
-				Integer discount = entry.getValue();
+				Integer emotDiscount = entry.getValue();
 				
-				if(discount >= purchaseStandardDiscount) {
-					emoticonPurchaseCost += emoticons[no] * (100 - discount) / 100;
+				if(emotDiscount >= purchaseStandardDiscount) {
+					emoticonPurchaseCost += emoticons[no] * (100 - emotDiscount) / 100;
 				}
 			}
 			
@@ -70,18 +78,31 @@ public class EmoticonDiscountEvent {
 			}
 		}
 		
-		Integer[] salesResult = {svcJoinUserCount, emoticonPurchaseTotCost};	 // 이모티콘 판매 결과(이모티콘 플러스 서비스 가입자 수, 이모티콘 판매액)
-		
-		salesResultMap.put(resultIdx, salesResult);
-		resultIdx++;
-		
-		// TODO 정확한 베스트 판매결과 추출 필요
-		bestResult = Arrays.stream(salesResultMap.get(0))
-						.filter(i -> i != null)
-						.mapToInt(Integer::intValue)
-						.toArray();
+		if(svcJoinUserCount > bestResult[0]) {
+			bestResult[0] = svcJoinUserCount;
+			bestResult[1] = emoticonPurchaseTotCost;
+		} else if(svcJoinUserCount == bestResult[0]) {
+			if(emoticonPurchaseTotCost > bestResult[1]) {
+				bestResult[1] = emoticonPurchaseTotCost;
+			}
+		}
 		
 		return bestResult;
+	}
+	
+	public static void getDiscountCase(int depth, int emoLen) {
+		LinkedHashMap<Integer, Integer> emoticonDiscountMap = new LinkedHashMap<Integer, Integer>();
+		int discountPolicyLen = 0;
+		
+		if(depth == emoLen) {
+			discountCaseList.add(emoticonDiscountMap);
+			return;
+		} 
+		
+		for (int i = 0; i < discountPolicyLen; i++) {
+			emoticonDiscountMap.put(depth, discountPolicy[i]);
+			getDiscountCase(depth + 1, emoLen);
+		}
 	}
 	
 }
