@@ -80,8 +80,11 @@ public class EmoticonDiscountEvent {
 	// [[40, 10000], [25, 10000]]															[7000, 9000]				[1, 5400]
 	// [[40, 2900], [23, 10000], [11, 5200], [5, 5900], [40, 3100], [27, 9200], [32, 6900]]	[1300, 1500, 1600, 4900]	[4, 13860]
 	public static void main(String[] args) {
-		int[][] users = {{40, 10000}, {25, 10000}};		// (비율, 가격)
-		int[] emoticons = {7000, 9000};					// 이모티콘 가격
+//		int[][] users = {{40, 10000}, {25, 10000}};		// (비율, 가격)
+//		int[] emoticons = {7000, 9000};					// 이모티콘 가격
+//		int[] result;
+		int[][] users = {{40, 2900}, {23, 10000}, {11, 5200}, {5, 5900}, {40, 3100}, {27, 9200}, {32, 6900}};		// (비율, 가격)
+		int[] emoticons = {1300, 1500, 1600, 4900};					// 이모티콘 가격
 		int[] result;
 		
 		result = getBestDiscountPolicy(users, emoticons);
@@ -94,91 +97,83 @@ public class EmoticonDiscountEvent {
 	 * 2.이모티콘 판매액을 최대한 늘리는 것. 
 	 */
 	public static int[] getBestDiscountPolicy(int[][] users, int[] emoticons) {
+		List<LinkedHashMap<Integer, Integer>> discountCaseList = new ArrayList<LinkedHashMap<Integer,Integer>>();
+		LinkedHashMap<Integer, Integer> emoticonDiscountMap = new LinkedHashMap<>();
 		int[] bestResult = {0, 0};
 		int[] discountPolicy = {10, 20, 30, 40};		// 이모티콘 할인율 선택 목록
-		List<LinkedHashMap<Integer, Integer>> discountCaseList = new ArrayList<LinkedHashMap<Integer,Integer>>();
-
 		int emoLen = 0;
-		int discountPolicyLen = 0;
-		
-		
+
 		emoLen = emoticons.length;
-		discountPolicyLen = discountPolicy.length;
-		
-		
-		// TODO 이모티콘 할인율 배정 LOOP 필요
-		LinkedHashMap<Integer, Integer> emoticonDiscountMap = new LinkedHashMap<Integer, Integer>();
-		int idx = 0;
-		
-		for(int emoticon: emoticons) {
-			emoticonDiscountMap.put(idx, discountPolicy[3]);
-			idx++;
-		}
 
-//		emoticonDiscountMap.put(0, discountPolicy[2]);
-//		emoticonDiscountMap.put(1, discountPolicy[3]);
+		// 이모티콘 할인율 케이스 나열
+		getDiscountCase(discountCaseList, emoticonDiscountMap, discountPolicy, 0, emoLen);
 
-		// 이모티콘 판매결과
-		int svcJoinUserCount 		= 0;	// 이모티콘 플러스 서비스 가입자 수
-		int emoticonPurchaseTotCost = 0;	// 이모티콘 총 판매액
+		// 이모티콘 판매 결과 Loop
+		for (LinkedHashMap<Integer, Integer> discountCase: discountCaseList) {
+			// 이모티콘 판매결과
+			int svcJoinUserCount 		= 0;	// 이모티콘 플러스 서비스 가입자 수
+			int emoticonPurchaseTotCost = 0;	// 이모티콘 총 판매액
 
-		// 이모티콘 구매 비용 계산
-		for(int[] user: users) {
-			int purchaseStandardDiscount	= 0;		// 사용자의 이모티콘 구매 기준 할인율
-			int svcJoinStandardCost  		= 0;		// 사용자의 이모티콘 플러스 서비스 가입 기준 가격
-			int emoticonPurchaseCost		= 0;		// 이모티콘 구매 총 비용
-			boolean svcJoinStatus 	 		= false;	// 이모티콘 플러스 서비스 가입 여부
+			// 이모티콘 구매 비용 계산
+			for(int[] user: users) {
+				int purchaseStandardDiscount	= 0;		// 사용자의 이모티콘 구매 기준 할인율
+				int svcJoinStandardCost  		= 0;		// 사용자의 이모티콘 플러스 서비스 가입 기준 가격
+				int emoticonPurchaseCost		= 0;		// 이모티콘 구매 총 비용
+				boolean svcJoinStatus 	 		= false;	// 이모티콘 플러스 서비스 가입 여부
 
-			purchaseStandardDiscount	= user[0]; 
-			svcJoinStandardCost			= user[1];
-			
-			for (Map.Entry<Integer, Integer> entry : emoticonDiscountMap.entrySet()) {
-				Integer no = entry.getKey();
-				Integer emotDiscount = entry.getValue();
-				
-				if(emotDiscount >= purchaseStandardDiscount) {
-					emoticonPurchaseCost += emoticons[no] * (100 - emotDiscount) / 100;
+				purchaseStandardDiscount	= user[0];
+				svcJoinStandardCost			= user[1];
+
+				for (Map.Entry<Integer, Integer> entry : discountCase.entrySet()) {
+					Integer no = entry.getKey();
+					Integer emotDiscount = entry.getValue();
+
+					if(emotDiscount >= purchaseStandardDiscount) {
+						emoticonPurchaseCost += emoticons[no] * (100 - emotDiscount) / 100;
+					}
+				}
+
+				if(emoticonPurchaseCost >= svcJoinStandardCost) {
+					svcJoinStatus = true;
+				}
+
+				if(svcJoinStatus) {
+					svcJoinUserCount++;
+				} else {
+					emoticonPurchaseTotCost += emoticonPurchaseCost;
 				}
 			}
-			
-			if(emoticonPurchaseCost >= svcJoinStandardCost) {
-				svcJoinStatus = true;
-			}
-			
-			if(svcJoinStatus) {
-				svcJoinUserCount++;
-			} else {
-				emoticonPurchaseTotCost += emoticonPurchaseCost;
-			}
-		}
-		
-		// 이모티콘 Best 판매결과 세팅
-		if(svcJoinUserCount > bestResult[0]) {
-			bestResult[0] = svcJoinUserCount;
-			bestResult[1] = emoticonPurchaseTotCost;
-		} else if(svcJoinUserCount == bestResult[0]) {
-			if(emoticonPurchaseTotCost > bestResult[1]) {
+
+			// 이모티콘 Best 판매결과 세팅
+			if(svcJoinUserCount > bestResult[0]) {
+				bestResult[0] = svcJoinUserCount;
 				bestResult[1] = emoticonPurchaseTotCost;
+			} else if(svcJoinUserCount == bestResult[0]) {
+				if(emoticonPurchaseTotCost > bestResult[1]) {
+					bestResult[1] = emoticonPurchaseTotCost;
+				}
 			}
 		}
-		
+
 		return bestResult;
 	}
 	
-//	public static void getDiscountCase(int depth, int emoLen) {
-//		LinkedHashMap<Integer, Integer> emoticonDiscountMap = new LinkedHashMap<Integer, Integer>();
-//		int discountPolicyLen = 0;
-//
-//		if(depth == emoLen) {
-//			discountCaseList.add(emoticonDiscountMap);
-//			return;
-//		}
-//
-//		for (int i = 0; i < discountPolicyLen; i++) {
-//			emoticonDiscountMap.put(depth, discountPolicy[i]);
-//			getDiscountCase(depth + 1, emoLen);
-//		}
-//	}
-	
+	public static void getDiscountCase(List<LinkedHashMap<Integer, Integer>> discountCaseList, LinkedHashMap<Integer, Integer> emoticonDiscountMap
+			, int[] discountPolicy, int depth, int emoLen) {
+		int discountPolicyLen = discountPolicy.length;
+
+		if(depth == emoLen){
+			LinkedHashMap<Integer, Integer> caseMap = new LinkedHashMap<>();
+			caseMap = (LinkedHashMap<Integer, Integer>) emoticonDiscountMap.clone();
+			discountCaseList.add(caseMap);
+			return;
+		}
+
+		for(int i=0; i<discountPolicyLen; i++){
+			emoticonDiscountMap.put(depth, discountPolicy[i]);
+			getDiscountCase(discountCaseList, emoticonDiscountMap, discountPolicy, depth+1, emoLen);
+		}
+	}
+
 }
 
